@@ -13,6 +13,10 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/CSCRecHit/interface/CSCRecHit2DCollection.h"
+#include "DataFormats/RPCRecHit/interface/RPCRecHitCollection.h"
+#include "Geometry/RPCGeometry/interface/RPCGeometry.h"
+#include "RecoLocalMuon/RPCRecHit/src/CSCStationIndex.h"
+#include "Geometry/RPCGeometry/interface/RPCGeomServ.h"
 
 class RPCCSCSegmentBuilder; 
 
@@ -29,6 +33,7 @@ private:
     int iev; // events through
     RPCCSCSegmentBuilder* segmentBuilder_;
     edm::EDGetTokenT<CSCRecHit2DCollection> m_token;
+    edm::EDGetTokenT<RPCRecHitCollection> rpc_token;
 };
 
 #endif

@@ -16,9 +16,11 @@
 #include <DataFormats/CSCRecHit/interface/CSCRecHit2DCollection.h>
 #include <DataFormats/RPCRecHit/interface/RPCCSCSegment.h>
 #include <Geometry/CSCGeometry/interface/CSCChamber.h>
-
+#include "DataFormats/RPCRecHit/interface/RPCRecHitCollection.h"
+#include "Geometry/RPCGeometry/interface/RPCGeometry.h"
 #include <FWCore/Framework/interface/Frameworkfwd.h>
 #include <vector>
+#include "RecoLocalMuon/RPCRecHit/src/CSCStationIndex.h"
 
 class RPCCSCSegmentAlgorithm {
 public:
@@ -29,7 +31,7 @@ public:
 
     /** Run the algorithm = build the segments in this chamber
     */
-    virtual std::vector<RPCCSCSegment> run(const CSCChamber* chamber, const std::vector<const CSCRecHit2D*>& rechits) = 0;  
+    virtual std::vector<RPCCSCSegment> run(const CSCChamber* chamber, const std::vector<const CSCRecHit2D*>& rechits, const RPCRecHitCollection* rpcrechits, const std::map<CSCStationIndex,std::set<RPCDetId>> rollstore, const CSCGeometry* geom, const RPCGeometry* rgeom) = 0;  
 
     private:
 };

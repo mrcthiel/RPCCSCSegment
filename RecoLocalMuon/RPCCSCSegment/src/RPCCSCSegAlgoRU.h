@@ -23,7 +23,7 @@
 #include <RecoLocalMuon/RPCCSCSegment/src/RPCCSCSegmentAlgorithm.h>
 #include <DataFormats/CSCRecHit/interface/CSCRecHit2D.h>
 #include "RPCCSCSegFit.h"
-
+#include "DataFormats/RPCRecHit/interface/RPCRecHitCollection.h"
 #include <Math/Functions.h>
 #include <Math/SVector.h>
 #include <Math/SMatrix.h>
@@ -71,14 +71,14 @@ public:
      * Build track segments in this chamber (this is where the actual
      * segment-building algorithm hides.)
      */
-    std::vector<RPCCSCSegment> buildSegments(const CSCChamber* aChamber, const ChamberHitContainer& rechits) const;
+    std::vector<RPCCSCSegment> buildSegments(const CSCChamber* aChamber, const ChamberHitContainer& rechits, const RPCRecHitCollection* rpcrechits, const std::map<CSCStationIndex,std::set<RPCDetId>> rollstore, const CSCGeometry* geom, const RPCGeometry* rgeom) const;
 
     //    std::vector<RPCCSCSegment> assambleRechitsInSegments(const ChamberHitContainer& rechits, int iadd, BoolContainer& used, BoolContainer& used3p, int *recHits_per_layer, const LayerIndex& layerIndex, std::vector<RPCCSCSegment> segments);
 
     /**
      * Here we must implement the algorithm
      */
-    std::vector<RPCCSCSegment> run(const CSCChamber* aChamber, const ChamberHitContainer& rechits) override{ return buildSegments(aChamber, rechits); }
+    std::vector<RPCCSCSegment> run(const CSCChamber* aChamber, const ChamberHitContainer& rechits, const RPCRecHitCollection* rpcrechits, const std::map<CSCStationIndex,std::set<RPCDetId>> rollstore, const CSCGeometry* geom, const RPCGeometry* rgeom) override{ return buildSegments(aChamber, rechits, rpcrechits, rollstore, geom, rgeom); }
 
 private:
     struct AlgoState {

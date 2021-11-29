@@ -13,7 +13,7 @@
 
 #include <DataFormats/TrackingRecHit/interface/RecSegment.h>
 #include <DataFormats/CSCRecHit/interface/CSCRecHit2DCollection.h>
-
+#include <DataFormats/RPCRecHit/interface/RPCRecHit.h>
 #include <iosfwd>
 
 class CSCDetId;
@@ -26,8 +26,10 @@ public:
     RPCCSCSegment() : theChi2(0.), aME11a_duplicate(false) {}
 	
     /// Constructor
-    RPCCSCSegment(const std::vector<const CSCRecHit2D*>& proto_segment, LocalPoint origin, 
-        	LocalVector direction, const AlgebraicSymMatrix& errors, double chi2);
+//    RPCCSCSegment(const std::vector<const CSCRecHit2D*>& proto_segment, LocalPoint origin, LocalVector direction, const AlgebraicSymMatrix& errors, double chi2);
+
+    RPCCSCSegment(const std::vector<const CSCRecHit2D*>& proto_segment, const RPCRecHit* rpcRecHit, LocalPoint origin, LocalVector direction, const AlgebraicSymMatrix& errors, double chi2);
+
   
     /// Destructor
     ~RPCCSCSegment() override;

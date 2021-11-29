@@ -14,7 +14,7 @@ namespace {
 
 }
 
-RPCCSCSegment::RPCCSCSegment(const std::vector<const CSCRecHit2D*>& proto_segment, LocalPoint origin, 
+RPCCSCSegment::RPCCSCSegment(const std::vector<const CSCRecHit2D*>& proto_segment, const RPCRecHit *rpcRecHit, LocalPoint origin, 
 	LocalVector direction, const AlgebraicSymMatrix& errors, double chi2) : 
   RecSegment(buildDetId(proto_segment.front()->cscDetId())),
   theOrigin(origin), 

@@ -11,7 +11,7 @@
 #include "Geometry/CSCGeometry/interface/CSCLayer.h"
 #include <Geometry/CSCGeometry/interface/CSCChamber.h>
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
-
+#include "DataFormats/RPCRecHit/interface/RPCRecHit.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
@@ -232,8 +232,9 @@ RPCCSCSegment RPCCSCSegAlgoShowering::showerSeg( const CSCChamber* aChamber, con
   }
 
   // Create an actual RPCCSCSegment - retrieve all info from the fit
-  RPCCSCSegment temp(sfit_->hits(), sfit_->intercept(), 
-  		  sfit_->localdir(), sfit_->covarianceMatrix(), theFlag );
+  RPCDetId RPCFakeId(1,1,1,1,1,1,1);
+  RPCRecHit* RPCFakePoint = new RPCRecHit(RPCFakeId,0,LocalPoint(0,0,0));
+  RPCCSCSegment temp(sfit_->hits(), RPCFakePoint, sfit_->intercept(), sfit_->localdir(), sfit_->covarianceMatrix(), theFlag );
   delete sfit_;
   sfit_ = nullptr;
 

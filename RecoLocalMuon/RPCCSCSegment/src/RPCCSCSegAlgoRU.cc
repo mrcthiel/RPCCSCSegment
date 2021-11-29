@@ -16,6 +16,11 @@
 #include <cmath>
 #include <iostream>
 #include <string>
+#include "Geometry/RPCGeometry/interface/RPCGeomServ.h"
+#include "Geometry/CommonTopologies/interface/TrapezoidalStripTopology.h"
+#include "DataFormats/CSCRecHit/interface/CSCRecHit2D.h"
+#include "RecoLocalMuon/RPCCSCSegment/src/RPCCSCSegNewFit.h"
+
 
 RPCCSCSegAlgoRU::RPCCSCSegAlgoRU(const edm::ParameterSet& ps)
   : RPCCSCSegmentAlgorithm(ps), myName("RPCCSCSegAlgoRU"){
@@ -53,7 +58,7 @@ RPCCSCSegAlgoRU::RPCCSCSegAlgoRU(const edm::ParameterSet& ps)
   }
 }
 
-std::vector<RPCCSCSegment> RPCCSCSegAlgoRU::buildSegments(const CSCChamber* aChamber, const ChamberHitContainer& urechits) const {
+std::vector<RPCCSCSegment> RPCCSCSegAlgoRU::buildSegments(const CSCChamber* aChamber, const ChamberHitContainer& urechits, const RPCRecHitCollection* rpcrechits, const std::map<CSCStationIndex,std::set<RPCDetId>> rollstore, const CSCGeometry* geom_, const RPCGeometry* rgeom_) const {
   ChamberHitContainer rechits = urechits;
   LayerIndex layerIndex(rechits.size());
   int recHits_per_layer[6] = {0,0,0,0,0,0};
@@ -245,8 +250,10 @@ std::vector<RPCCSCSegment> RPCCSCSegAlgoRU::buildSegments(const CSCChamber* aCha
 	if(aState.proto_segment.empty()) continue;
 	updateParameters(aState);
 	// Create an actual RPCCSCSegment - retrieve all info from the fit
-	RPCCSCSegment temp(aState.sfit->hits(), aState.sfit->intercept(),
-			aState.sfit->localdir(), aState.sfit->covarianceMatrix(), aState.sfit->chi2());
+	RPCDetId RPCFakeId(1,1,1,1,1,1,1);
+	RPCRecHit* RPCFakePoint = new RPCRecHit(RPCFakeId,0,LocalPoint(0,0,0)); // tentar fazer um RPCRecHit vazio no futuro
+	RPCCSCSegment temp(aState.sfit->hits(), RPCFakePoint, aState.sfit->intercept(),
+			aState.sfit->localdir(), aState.sfit->covarianceMatrix(), aState.sfit->chi2());//AQUI
 	aState.sfit = nullptr;
 	segments.push_back(temp);
 	//if the segment has 3 hits flag them as used in a particular way
@@ -331,7 +338,129 @@ std::vector<RPCCSCSegment> RPCCSCSegAlgoRU::buildSegments(const CSCChamber* aCha
     }
   }//while
   // Give the segments to the CSCChamber
-  return segments;
+
+
+  std::vector<RPCCSCSegment>::iterator it_new = segments.begin();
+        double MaxD = 80.;
+  float eyr = 1; //?????
+
+  std::vector<RPCCSCSegment> segments_new;
+  segments_new.clear();
+
+  while(it_new != segments.end()) {
+  	const CSCDetId CSCId = (*it_new).cscDetId();
+                int cscEndCap = CSCId.endcap();
+                int cscStation = CSCId.station();
+                int cscRing = CSCId.ring();
+                int rpcRegion = 1; if(cscEndCap==2) rpcRegion= -1;
+                int rpcRing = cscRing;
+                if(cscRing==4)rpcRing =1;
+                int rpcStation = cscStation;
+                int rpcSegment = CSCId.chamber();
+                LocalPoint segmentPosition=(*it_new).localPosition();
+                LocalVector segmentDirection=(*it_new).localDirection();
+                float dz=segmentDirection.z();
+                if(((*it_new).dimension()==4) && ((*it_new).nRecHits()<=10 && (*it_new).nRecHits()>=4)){
+                       float Xo=segmentPosition.x();
+                        float Yo=segmentPosition.y();
+                        float Zo=segmentPosition.z();
+                        float dx=segmentDirection.x();
+                        float dy=segmentDirection.y();
+                        //float dz=segmentDirection.z();
+                        CSCStationIndex theindex(rpcRegion,rpcStation,rpcRing,rpcSegment);
+                        static const std::set<RPCDetId> empty;//
+                        std::set<RPCDetId> rollsForThisCSC = (rollstore.find(theindex) == rollstore.end()) ? empty : rollstore.at(theindex);//
+//                        const CSCChamber* TheChamber=geom_->chamber(CSCId);
+                        const CSCChamber* TheChamber = aChamber;
+                        if(rpcRing!=1&&rpcStation!=4){
+                                assert(!rollsForThisCSC.empty());
+                                for (std::set<RPCDetId>::iterator iteraRoll = rollsForThisCSC.begin();iteraRoll != rollsForThisCSC.end(); iteraRoll++){
+                                        const RPCRoll* rollasociated = rgeom_->roll(*iteraRoll);
+                                        RPCDetId rpcId = rollasociated->id();
+                                        const BoundPlane & RPCSurface = rollasociated->surface();
+                                        GlobalPoint CenterPointRollGlobal = RPCSurface.toGlobal(LocalPoint(0,0,0));
+                                        LocalPoint CenterRollinCSCFrame = TheChamber->toLocal(CenterPointRollGlobal);
+                                        float D=CenterRollinCSCFrame.z();
+                                        float X=Xo+dx*D/dz; // essas s√o as posi√√µes o referencial do CSC
+                                        float Y=Yo+dy*D/dz;
+                                        float Z=D;
+                                        const TrapezoidalStripTopology* top_=dynamic_cast<const TrapezoidalStripTopology*>(&(rollasociated->topology()));
+                                        LocalPoint xmin = top_->localPosition(0.);
+                                        LocalPoint xmax = top_->localPosition((float)rollasociated->nstrips());
+                                        float rsize = fabs( xmax.x()-xmin.x() );
+                                        float stripl = top_->stripLength();
+                                        //float stripw = top_->pitch();
+                                        float extrapolatedDistance = sqrt((X-Xo)*(X-Xo)+(Y-Yo)*(Y-Yo)+(Z-Zo)*(Z-Zo));
+                                        if(extrapolatedDistance<=MaxD){
+                                                GlobalPoint GlobalPointExtrapolated=TheChamber->toGlobal(LocalPoint(X,Y,Z)); // posicao global
+                                                LocalPoint PointExtrapolatedRPCFrame = RPCSurface.toLocal(GlobalPointExtrapolated);
+                                                if(fabs(PointExtrapolatedRPCFrame.z()) < 1. && fabs(PointExtrapolatedRPCFrame.x()) < rsize*eyr && fabs(PointExtrapolatedRPCFrame.y()) < stripl*eyr){
+                                                        RPCRecHit RPCPoint(rpcId,0,PointExtrapolatedRPCFrame);
+                                                        //RPCGeomServ rpcpointsrv_new(rpcId);
+	
+	                                                //const LocalPoint RPCExtrapolatedPointCSCFrame = TheChamber->toLocal(GlobalPointExtrapolated);
+							//std::cout << CSCId << std::endl;
+							//std::cout << RPCExtrapolatedPointCSCFrame << std::endl;
+							/*const LocalError RPCExtrapolatedPointCSCFrameError(0.,0.,0.);
+
+                                                        CSCRecHit2D::ChannelContainer wgroups1;
+                                                        wgroups1.clear();
+							const CSCRecHit2D::ChannelContainer wgroups = wgroups1;
+                                                        CSCRecHit2D::ADCContainer adcMap1;
+							std::vector<float> adc2;
+							adc2.push_back(999.);
+                                                        adc2.push_back(999.);
+							adcMap1.put(1,adc2.begin(),adc2.end());
+							const CSCRecHit2D::ADCContainer adcMap = adcMap1;
+							*/
+
+                                                        for (RPCRecHitCollection::const_iterator rpcRecHit = rpcrechits->begin();rpcRecHit!=rpcrechits->end(); ++rpcRecHit){
+                                                                RPCDetId rpcRecHit_id = rpcRecHit->rpcId();
+
+                                                                if(rpcRecHit_id.region()==rpcId.region() && rpcRecHit_id.ring()==rpcId.ring() && rpcRecHit_id.station()==rpcId.station() && rpcRecHit_id.sector()==rpcId.sector() && rpcRecHit_id.subsector()==rpcId.subsector() && rpcRecHit_id.roll()==rpcId.roll() && abs(RPCPoint.localPosition().x()-rpcRecHit->localPosition().x())<3.){
+  									std::vector<const TrackingRecHit*> chainedRecHits;
+									chainedRecHits.clear();
+									chainedRecHits.push_back(rpcRecHit->clone());
+  									auto cscrhs = it_new->specificRecHits();
+									std::vector<const CSCRecHit2D*> cscRecHits_v;
+									cscRecHits_v.clear();
+  									for (auto crh = cscrhs.begin(); crh!= cscrhs.end(); crh++){
+										chainedRecHits.push_back(crh->clone());
+										cscRecHits_v.push_back(crh->clone());
+									}
+									//std::cout << chainedRecHits.size() <<  std::endl;
+									// verificar se nao ha double couting
+									
+									//chamar o fit aqui
+									RPCCSCSegNewFit* sfit_;
+									//delete sfit_;
+									sfit_ = new RPCCSCSegNewFit(chainedRecHits,rgeom_,geom_,aChamber);
+									sfit_->fit();
+									LocalPoint protoIntercept = sfit_->intercept();
+									LocalVector protoDirection     = sfit_->localdir();
+									AlgebraicSymMatrix protoErrors = sfit_->covarianceMatrix(); 
+									double protoChi2               = sfit_->chi2();
+//std::cout << "NEW RPCCSCSegment   ---->>>>   protoIntercept: " << protoIntercept << ";  protoDirection: " << protoDirection << ";  protoChi2: " << protoChi2 << std::endl;
+//RPCCSCSegment(const std::vector<const CSCRecHit2D*>& proto_segment, const RPCRecHit rpcRecHit, LocalPoint origin, LocalVector direction, const AlgebraicSymMatrix& errors, double chi2);
+//RPCCSCSegment temp(aState.sfit->hits(), aState.sfit->intercept(),aState.sfit->localdir(), aState.sfit->covarianceMatrix(), aState.sfit->chi2());
+									RPCCSCSegment temp(cscRecHits_v,rpcRecHit->clone(),protoIntercept,protoDirection,protoErrors,protoChi2);
+									segments_new.push_back(temp);
+//std::cout << "Old    CSCSegment-> localPosition(): " << (*it_new).localPosition() << "; localDirection(): " << (*it_new).localDirection() << "; chi2(): " << (*it_new).chi2() << std::endl;
+
+//std::cout << "New RPCCSCSegment-> localPosition(): " << temp.localPosition() << "; localDirection(): " << temp.localDirection() << "; chi2(): " << temp.chi2() << std::endl;
+//std::cout << "============================================================================================================================" << std::endl;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+      	++it_new;
+  }
+
+  return segments_new;
 }//build segments
 
 void RPCCSCSegAlgoRU::tryAddingHitsToSegment(AlgoState& aState, const ChamberHitContainer& rechits,

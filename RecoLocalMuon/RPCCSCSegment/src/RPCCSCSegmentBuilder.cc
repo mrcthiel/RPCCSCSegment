@@ -18,6 +18,8 @@
 #include <FWCore/Utilities/interface/Exception.h>
 #include <FWCore/MessageLogger/interface/MessageLogger.h> 
 
+#include "Geometry/RPCGeometry/interface/RPCGeometry.h"
+
 RPCCSCSegmentBuilder::RPCCSCSegmentBuilder(const edm::ParameterSet& ps) : geom_(nullptr) {
     
     // The algo chosen for the segment building
@@ -55,12 +57,29 @@ RPCCSCSegmentBuilder::RPCCSCSegmentBuilder(const edm::ParameterSet& ps) : geom_(
                         create(algoName, segAlgoPSet[algoToType[j]-1]));
 	edm::LogVerbatim("RPCCSCSegment|CSC")<< "using algorithm #" << algoToType[j] << " for chamber type " << chType[j];
     }
+
 }
 
 RPCCSCSegmentBuilder::~RPCCSCSegmentBuilder() = default;
 
-void RPCCSCSegmentBuilder::build(const CSCRecHit2DCollection* recHits, RPCCSCSegmentCollection& oc) {
-  	
+//void RPCCSCSegmentBuilder::build(const CSCRecHit2DCollection* recHits, RPCCSCSegmentCollection& oc) {
+void RPCCSCSegmentBuilder::build(const CSCRecHit2DCollection* recHits, const RPCRecHitCollection* rpcrechits, const std::map<CSCStationIndex,std::set<RPCDetId>> rollstore, RPCCSCSegmentCollection& oc) {
+  
+
+
+/*
+                                                        for (RPCRecHitCollection::const_iterator rpcRecHit = rpcrechits->begin();rpcRecHit!=rpcrechits->end(); ++rpcRecHit){
+                                                                std::cout << "x: " << rpcRecHit->localPosition().x()  << std::endl;
+                                                                std::cout << "y: " << rpcRecHit->localPosition().y()  << std::endl;
+
+                                                         }
+*/
+
+
+
+
+
+	
   LogDebug("RPCCSCSegment|CSC")<< "Total number of rechits in this event: " << recHits->size();
 
     std::vector<CSCDetId> chambers;
@@ -98,7 +117,7 @@ void RPCCSCSegmentBuilder::build(const CSCRecHit2DCollection* recHits, RPCCSCSeg
         LogDebug("RPCCSCSegment|CSC") << "found " << cscRecHits.size() << " rechits in chamber " << *chIt;
             
         // given the chamber select the appropriate algo... and run it
-        std::vector<RPCCSCSegment> segv = algoMap[chamber->specs()->chamberTypeName()]->run(chamber, cscRecHits);
+        std::vector<RPCCSCSegment> segv = algoMap[chamber->specs()->chamberTypeName()]->run(chamber, cscRecHits, rpcrechits, rollstore, geom_, rgeom_);
 
         LogDebug("RPCCSCSegment|CSC") << "found " << segv.size() << " segments in chamber " << *chIt;
 
@@ -107,7 +126,9 @@ void RPCCSCSegmentBuilder::build(const CSCRecHit2DCollection* recHits, RPCCSCSeg
     }
 }
 
-void RPCCSCSegmentBuilder::setGeometry(const CSCGeometry* geom) {
+//void RPCCSCSegmentBuilder::setGeometry(const CSCGeometry* geom) {
+void RPCCSCSegmentBuilder::setGeometry(const CSCGeometry* geom, const RPCGeometry* rgeom) {
 	geom_ = geom;
+        rgeom_ = rgeom;
 }
 
