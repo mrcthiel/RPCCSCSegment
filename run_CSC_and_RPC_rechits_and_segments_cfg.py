@@ -29,7 +29,11 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('/store/mc/PhaseIITDRSpring19DR/Mu_FlatPt2to100-pythia8-gun/GEN-SIM-DIGI-RAW/NoPU_106X_upgrade2023_realistic_v3-v1/60000/23509529-CA46-0D44-91B3-CA5B0CD03AB5.root'),
+#    fileNames = cms.untracked.vstring('file:/eos/cms/store/user/mthiel/23509529-CA46-0D44-91B3-CA5B0CD03AB5.root'),
+    fileNames = cms.untracked.vstring('file:/eos/cms/store/user/mthiel/23509529-CA46-0D44-91B3-CA5B0CD03AB5.root','file:/eos/cms/store/user/mthiel/3D6E0381-37F8-CA44-99D2-F0F07A27AB2A.root','file:/eos/cms/store/user/mthiel/41A8FF37-7D2E-7249-B152-FE89164826F2.root','file:/eos/cms/store/user/mthiel/4B69420D-7BBC-BC46-8FF8-4090BB22E52F.root','file:/eos/cms/store/user/mthiel/560F7499-5721-654B-BC83-3AE76477D8F1.root','file:/eos/cms/store/user/mthiel/6EA092BE-94A5-AD49-80DB-6A73ADBD033E.root','file:/eos/cms/store/user/mthiel/77DD67E9-434B-8242-B08C-C99FBC95F477.root','file:/eos/cms/store/user/mthiel/7E51FB46-8F9C-614D-830E-1DC00A69B753.root','file:/eos/cms/store/user/mthiel/7EABBE9A-4C49-BA4C-87C9-8E7E245174B3.root','file:/eos/cms/store/user/mthiel/7F4AF09D-D268-C74E-B06C-259D965857BE.root','file:/eos/cms/store/user/mthiel/8659033B-7DE7-C448-B7D6-5DBC29F502A9.root','file:/eos/cms/store/user/mthiel/871278EB-3E2F-4342-B4CF-B7BDBF38975A.root','file:/eos/cms/store/user/mthiel/918902A9-9C86-A04C-B4F1-EADCD16A7E22.root','file:/eos/cms/store/user/mthiel/97A0EE28-28BF-7249-9A3F-772D6B7A98A3.root','file:/eos/cms/store/user/mthiel/A87AA119-9C11-3A49-B726-D87465854A19.root','file:/eos/cms/store/user/mthiel/AA5992F4-5D03-BF41-8CA6-0C0F5B38EC1E.root','file:/eos/cms/store/user/mthiel/B43C1523-B66F-944D-A2E9-128CB4576CF8.root','file:/eos/cms/store/user/mthiel/BBDD1FC4-DC6F-1F4C-B777-72D247A6FC1F.root','file:/eos/cms/store/user/mthiel/BDCB64F7-4BC6-D342-B4E7-F9451C5656D0.root','file:/eos/cms/store/user/mthiel/D696E7CC-7F02-CA4C-83C9-DD51FBCD3A48.root','file:/eos/cms/store/user/mthiel/DBDE8ECA-27FA-3D49-AE4A-8ACC528A853A.root','file:/eos/cms/store/user/mthiel/DD924933-8A75-8645-84F5-D408236797C1.root','file:/eos/cms/store/user/mthiel/DEE59424-11F1-B34E-A151-77D6642AA834.root','file:/eos/cms/store/user/mthiel/E0D5C6A5-B855-D14F-9124-0B2C9B28D0EA.root'),
+
+
+#    fileNames = cms.untracked.vstring('/store/mc/PhaseIITDRSpring19DR/Mu_FlatPt2to100-pythia8-gun/GEN-SIM-DIGI-RAW/NoPU_106X_upgrade2023_realistic_v3-v1/60000/23509529-CA46-0D44-91B3-CA5B0CD03AB5.root'),
     secondaryFileNames = cms.untracked.vstring()
 )
 
